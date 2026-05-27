@@ -9,7 +9,9 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.8.5",
+    "numpy>=2.4.6",
     "pydantic-settings>=2.5",
+    "sentence-transformers>=5.5.1",
 ]
 
 [dependency-groups]
@@ -37,7 +39,7 @@ files = ["src", "tests"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["datasets", "datasets.*"]
+module = ["datasets", "datasets.*", "sentence_transformers", "sentence_transformers.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
