@@ -11,6 +11,7 @@ dependencies = [
     "datasets>=4.8.5",
     "numpy>=2.4.6",
     "pydantic-settings>=2.5",
+    "qdrant-client>=1.18.0",
     "sentence-transformers>=5.5.1",
 ]
 
