@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, Protocol, runtime_checkable
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import ScoredPoint
@@ -30,6 +30,18 @@ class RetrievalResult:
     score: float
     chunk_id: str
     title: str
+
+
+@runtime_checkable
+class Retriever(Protocol):
+    """Anything that returns top-k documents for a query.
+
+    Dense, BM25, and hybrid retrievers all satisfy this protocol so the
+    rest of the pipeline (eval harness, generator, UI) can stay ignorant
+    of which one is wired up.
+    """
+
+    def retrieve(self, query: str, k: int = 10) -> list[RetrievalResult]: ...
 
 
 def dedup_to_documents(
@@ -91,5 +103,6 @@ __all__ = [
     "DEFAULT_OVERFETCH",
     "DenseRetriever",
     "RetrievalResult",
+    "Retriever",
     "dedup_to_documents",
 ]

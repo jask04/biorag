@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=2.4.6",
     "pydantic-settings>=2.5",
     "qdrant-client>=1.18.0",
+    "rank-bm25>=0.2.2",
     "sentence-transformers>=5.5.1",
 ]
 
@@ -40,7 +41,11 @@ files = ["src", "tests"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["datasets", "datasets.*", "sentence_transformers", "sentence_transformers.*"]
+module = [
+    "datasets", "datasets.*",
+    "sentence_transformers", "sentence_transformers.*",
+    "rank_bm25", "rank_bm25.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
