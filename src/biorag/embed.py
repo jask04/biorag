@@ -29,7 +29,7 @@ EmbeddingMatrix = npt.NDArray[np.float32]
 
 DEFAULT_CACHE_DIR = Path(".cache") / "embeddings"
 GENERAL_MODEL = "BAAI/bge-small-en-v1.5"
-BIOMEDICAL_MODEL = "NeuML/pubmedbert-base-embeddings"
+BIOMEDICAL_MODEL = "pritamdeka/S-PubMedBert-MS-MARCO"
 
 
 @runtime_checkable
