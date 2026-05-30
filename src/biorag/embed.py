@@ -49,13 +49,29 @@ class SentenceTransformerEmbedder:
     similarity — important for both Qdrant ANN and BM25/dense fusion later.
     """
 
-    def __init__(self, model_name: str, batch_size: int = 32) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        batch_size: int = 32,
+        device: str | None = None,
+    ) -> None:
         # Lazy import so importing ``biorag.embed`` is cheap and tests that
         # mock the embedder don't pay for torch.
+        import torch
         from sentence_transformers import SentenceTransformer
 
+        if device is None:
+            # Prefer Apple Silicon's Metal backend when available — encoding
+            # BERT-base on CPU is the difference between minutes and hours.
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+            else:
+                device = "cpu"
         self.name = model_name
-        self._model = SentenceTransformer(model_name)
+        self.device = device
+        self._model = SentenceTransformer(model_name, device=device)
         self._batch_size = batch_size
         dim = self._model.get_sentence_embedding_dimension()
         if dim is None:  # pragma: no cover — sentence-transformers always sets it
