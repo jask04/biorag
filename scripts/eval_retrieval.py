@@ -45,6 +45,7 @@ from biorag.rerank import (
     general_reranker,
 )
 from biorag.retrieve import DenseRetriever, Retriever
+from biorag.rewrite import GeminiHyDERewriter, HydeRetriever, Rewriter
 
 ALL_NAMES = (
     "dense-general",
@@ -54,6 +55,8 @@ ALL_NAMES = (
     "dense-general+rerank-mini",
     "hybrid+rerank-mini",
     "hybrid+rerank-medcpt",
+    "hybrid+hyde",
+    "hybrid+hyde+rerank-mini",
 )
 
 # Configurations evaluated by default. MedCPT is the heaviest cross-encoder
@@ -80,12 +83,37 @@ class _RerankerCache:
         return self._medcpt
 
 
+class _RewriterCache:
+    """Build the HyDE rewriter once and reuse it across HyDE configs.
+
+    All HyDE configs share the same rewrite cache on disk anyway, but
+    sharing the instance means the in-memory cache is hot for the second
+    pass and we never pay for the SDK ``Client(api_key=...)`` twice.
+    """
+
+    def __init__(self) -> None:
+        self._hyde: GeminiHyDERewriter | None = None
+
+    def hyde(self) -> Rewriter:
+        if self._hyde is None:
+            self._hyde = GeminiHyDERewriter()
+        return self._hyde
+
+
+def _hybrid(bm25: BM25Retriever) -> HybridRetriever:
+    return HybridRetriever(
+        DenseRetriever(CachedEmbedder(general_embedder())),
+        bm25,
+    )
+
+
 def _build(
     name: str,
     documents: list[Document],
     corpus: Mapping[str, Document],
     bm25: BM25Retriever,
     rerankers: _RerankerCache,
+    rewriters: _RewriterCache,
 ) -> Retriever:
     if name == "dense-general":
         return DenseRetriever(CachedEmbedder(general_embedder()))
@@ -94,25 +122,19 @@ def _build(
     if name == "bm25":
         return bm25
     if name == "hybrid":
-        return HybridRetriever(
-            DenseRetriever(CachedEmbedder(general_embedder())),
-            bm25,
-        )
+        return _hybrid(bm25)
     if name == "dense-general+rerank-mini":
         base = DenseRetriever(CachedEmbedder(general_embedder()))
         return RerankingRetriever(base, rerankers.mini(), corpus)
     if name == "hybrid+rerank-mini":
-        base = HybridRetriever(
-            DenseRetriever(CachedEmbedder(general_embedder())),
-            bm25,
-        )
-        return RerankingRetriever(base, rerankers.mini(), corpus)
+        return RerankingRetriever(_hybrid(bm25), rerankers.mini(), corpus)
     if name == "hybrid+rerank-medcpt":
-        base = HybridRetriever(
-            DenseRetriever(CachedEmbedder(general_embedder())),
-            bm25,
-        )
-        return RerankingRetriever(base, rerankers.medcpt(), corpus)
+        return RerankingRetriever(_hybrid(bm25), rerankers.medcpt(), corpus)
+    if name == "hybrid+hyde":
+        return HydeRetriever(_hybrid(bm25), rewriters.hyde())
+    if name == "hybrid+hyde+rerank-mini":
+        hyde = HydeRetriever(_hybrid(bm25), rewriters.hyde())
+        return RerankingRetriever(hyde, rerankers.mini(), corpus)
     raise ValueError(f"unknown retriever: {name}")
 
 
@@ -128,6 +150,15 @@ def main() -> None:
         default=str(DEFAULT_RESULTS_DIR / "retrieval.json"),
         help="Where to write the JSON results.",
     )
+    parser.add_argument(
+        "--max-queries",
+        type=int,
+        default=None,
+        help=(
+            "Cap the number of scored queries per retriever (useful when an "
+            "LLM-backed config has to fit inside a daily quota)."
+        ),
+    )
     args = parser.parse_args()
 
     names = [n.strip() for n in args.retrievers.split(",") if n.strip()]
@@ -141,13 +172,16 @@ def main() -> None:
     corpus = {d.id: d for d in documents}
     bm25 = BM25Retriever(documents)  # built once, reused by bm25 + hybrid
     rerankers = _RerankerCache()
+    rewriters = _RewriterCache()
     print(f"Loaded {len(documents)} docs, {len(queries)} queries, {len(qrels)} qrels")
 
     results: list[RetrieverEvalResult] = []
     for name in names:
         print(f"\n→ Evaluating {name} ...")
-        retriever = _build(name, documents, corpus, bm25, rerankers)
-        result = evaluate(retriever, queries, qrels, name=name)
+        retriever = _build(name, documents, corpus, bm25, rerankers, rewriters)
+        result = evaluate(
+            retriever, queries, qrels, name=name, max_queries=args.max_queries
+        )
         results.append(result)
         # Flush per-retriever embed caches if the retriever (or its base)
         # owns one — RerankingRetriever stores the base privately.

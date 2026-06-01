@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.8.5",
+    "google-genai>=2.7.0",
     "numpy>=2.4.6",
     "pydantic-settings>=2.5",
     "qdrant-client>=1.18.0",

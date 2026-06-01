@@ -117,15 +117,21 @@ def evaluate(
     qrels: Sequence[QrelEntry],
     name: str,
     k_values: Sequence[int] = DEFAULT_K_VALUES,
+    max_queries: int | None = None,
 ) -> RetrieverEvalResult:
     """Run ``retriever`` over scored queries and average the metrics.
 
     A query is "scored" iff it has at least one ``relevance > 0`` qrel.
     All other queries are skipped silently — they cannot contribute to
-    recall and would dilute MRR with undefined values.
+    recall and would dilute MRR with undefined values. ``max_queries``,
+    when set, caps the *scored* queries (queries with no positive qrels
+    don't count against the cap) — useful for HyDE/answer-eval runs that
+    must stay under an LLM provider's daily quota.
     """
     if not k_values:
         raise ValueError("k_values must not be empty")
+    if max_queries is not None and max_queries < 1:
+        raise ValueError("max_queries must be >= 1 when set")
     by_qid = _group_qrels(qrels)
     max_k = max(max(k_values), NDCG_K)
 
@@ -150,6 +156,8 @@ def evaluate(
         mrr_sum += reciprocal_rank(retrieved_ids, relevant)
         ndcg_sum += ndcg_at_k(retrieved_ids, graded, NDCG_K)
         counted += 1
+        if max_queries is not None and counted >= max_queries:
+            break
 
     if counted == 0:
         raise RuntimeError("no queries had any positive qrels — nothing to score")
