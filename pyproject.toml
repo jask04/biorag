@@ -17,6 +17,9 @@ dependencies = [
     "sentence-transformers>=5.5.1",
 ]
 
+[project.scripts]
+ask = "biorag.cli:ask"
+
 [dependency-groups]
 dev = [
     "ruff>=0.8",
