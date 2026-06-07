@@ -10,9 +10,12 @@ requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.8.5",
     "google-genai>=2.7.0",
+    "langchain-community<0.4",
+    "langchain-google-genai>=4.2.4",
     "numpy>=2.4.6",
     "pydantic-settings>=2.5",
     "qdrant-client>=1.18.0",
+    "ragas>=0.4.3",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=5.5.1",
 ]
@@ -49,6 +52,11 @@ module = [
     "datasets", "datasets.*",
     "sentence_transformers", "sentence_transformers.*",
     "rank_bm25", "rank_bm25.*",
+    "ragas", "ragas.*",
+    "langchain_google_genai", "langchain_google_genai.*",
+    "langchain_community", "langchain_community.*",
+    "langchain_core", "langchain_core.*",
+    "langchain", "langchain.*",
 ]
 ignore_missing_imports = true
 
