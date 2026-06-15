@@ -11,7 +11,8 @@ biorag is a **cited literature Q&A assistant, not a medical-advice tool.**
 Every answer is generated only from retrieved documents and cites them
 inline.
 
-**Live demo:** _(Hugging Face Space — see [Deploying](#deploying))_
+**Live demo:** **https://huggingface.co/spaces/jask04/biorag** (Hugging
+Face Space)
 
 ## The headline: every technique, measured
 
