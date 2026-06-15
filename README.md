@@ -14,12 +14,16 @@ inline.
 **Live demo:** **https://huggingface.co/spaces/jask04/biorag** (Hugging
 Face Space)
 
+[![biorag Ask interface](docs/ask.png)](https://huggingface.co/spaces/jask04/biorag)
+
 ## The headline: every technique, measured
 
 The point of biorag isn't that it does retrieval — it's that it *measures*
 whether each technique earns its place. All numbers below are produced by
 `scripts/eval_retrieval.py` against **BEIR NFCorpus** gold relevance
 judgments (3,633 documents, 323 test queries with positive qrels).
+
+[![biorag Benchmark dashboard](docs/benchmark.png)](https://huggingface.co/spaces/jask04/biorag)
 
 ### Retrieval quality (323 NFCorpus test queries)
 
