@@ -193,6 +193,10 @@ vectors from your Qdrant Cloud cluster. Set three Space secrets —
 - **No GPU requirement** — CPU-friendly models throughout.
 - **Not a medical-advice tool** — cited literature Q&A only.
 
+## License
+
+MIT — see [LICENSE](LICENSE).
+
 ## Repo layout
 
 ```
