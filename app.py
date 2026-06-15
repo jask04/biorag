@@ -31,7 +31,8 @@ import pandas as pd
 import streamlit as st
 
 from biorag.bm25 import BM25Retriever
-from biorag.corpus import Document, load_documents
+from biorag.config import get_settings
+from biorag.corpus import Document, ensure_corpus, load_documents
 from biorag.embed import CachedEmbedder, general_embedder
 from biorag.generate import Answer, GeminiAnswerGenerator
 from biorag.hybrid import HybridRetriever
@@ -51,6 +52,8 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner="Loading corpus …")
 def get_documents() -> list[Document]:
+    # Self-bootstrap on a fresh Space: download NFCorpus if it's not there.
+    ensure_corpus()
     return load_documents()
 
 
@@ -74,17 +77,19 @@ def get_reranker_model():  # type: ignore[no-untyped-def]
     return general_reranker()
 
 
-@st.cache_resource(show_spinner=False)
-def get_generator() -> GeminiAnswerGenerator:
-    return GeminiAnswerGenerator(get_corpus())
+def get_generator(api_key: str | None) -> GeminiAnswerGenerator:
+    # Built per request, not cached: the genai client is lightweight and a
+    # visitor's BYOK key must never be cached across sessions.
+    return GeminiAnswerGenerator(get_corpus(), api_key=api_key)
 
 
-@st.cache_resource(show_spinner=False)
-def get_rewriter() -> GeminiHyDERewriter:
-    return GeminiHyDERewriter()
+def get_rewriter(api_key: str | None) -> GeminiHyDERewriter:
+    return GeminiHyDERewriter(api_key=api_key)
 
 
-def build_pipeline(mode: str, use_rerank: bool, use_hyde: bool) -> Retriever:
+def build_pipeline(
+    mode: str, use_rerank: bool, use_hyde: bool, api_key: str | None
+) -> Retriever:
     """Assemble the retriever stack the sidebar describes."""
     retriever: Retriever
     if mode == "dense":
@@ -98,7 +103,7 @@ def build_pipeline(mode: str, use_rerank: bool, use_hyde: bool) -> Retriever:
             retriever, get_reranker_model(), get_corpus()
         )
     if use_hyde:
-        retriever = HydeRetriever(retriever, get_rewriter())
+        retriever = HydeRetriever(retriever, get_rewriter(api_key))
     return retriever
 
 
@@ -188,9 +193,31 @@ with st.sidebar:
     )
     top_k = st.slider("Passages to ground on (k)", 3, 10, 5)
     st.divider()
+
+    st.subheader("Gemini API key")
+    user_key = st.text_input(
+        "Your Gemini API key (optional)",
+        type="password",
+        help="Bring your own free key from Google AI Studio for unlimited "
+        "use. Without one, the shared demo key is used until its small "
+        "daily free-tier quota runs out. Your key is used only for your "
+        "requests and never stored.",
+        label_visibility="collapsed",
+        placeholder="AIza… (optional — paste your own key)",
+    )
+    has_shared_key = bool(get_settings().google_api_key)
+    resolved_key = user_key.strip() or None
+    if resolved_key:
+        st.caption("Using your key.")
+    elif has_shared_key:
+        st.caption("Using the shared demo key (limited daily quota).")
+    else:
+        st.caption("No key configured — paste one above to generate answers.")
+
+    st.divider()
     st.caption(
-        "Pipeline numbers live in the eval harness — see the README "
-        "results table."
+        "Pipeline numbers live in the eval harness — see the **Benchmark** "
+        "tab and the README results table."
     )
 
 
@@ -209,14 +236,38 @@ with ask_tab:
         label_visibility="collapsed",
     )
 
-    ask_clicked = st.button("Ask", type="primary", disabled=not question.strip())
+    can_ask = bool(question.strip()) and (resolved_key or has_shared_key)
+    ask_clicked = st.button("Ask", type="primary", disabled=not can_ask)
+    if question.strip() and not (resolved_key or has_shared_key):
+        st.info("Paste a Gemini API key in the sidebar to generate answers.")
 
     if ask_clicked and question.strip():
-        pipeline = build_pipeline(mode, use_rerank, use_hyde)
+        pipeline = build_pipeline(mode, use_rerank, use_hyde, resolved_key)
         with st.spinner("Retrieving …"):
             hits = pipeline.retrieve(question.strip(), k=top_k)
-        with st.spinner("Generating grounded answer …"):
-            answer: Answer = get_generator().answer(question.strip(), hits)
+        try:
+            with st.spinner("Generating grounded answer …"):
+                answer: Answer = get_generator(resolved_key).answer(
+                    question.strip(), hits
+                )
+        except RuntimeError as exc:
+            msg = str(exc)
+            if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+                st.error(
+                    "The shared demo key has hit its daily free-tier quota. "
+                    "Paste your own free Gemini API key in the sidebar "
+                    "(Google AI Studio) to keep going — retrieval still works "
+                    "below."
+                )
+            else:
+                st.error(f"Generation failed: {msg}")
+            with st.expander(f"Retrieved passages ({len(hits)})", expanded=True):
+                for hit in hits:
+                    st.markdown(
+                        f"**[{hit.doc_id}]** {hit.title or '(untitled)'}  \n"
+                        f"score `{hit.score:.3f}`"
+                    )
+            st.stop()
 
         if answer.unsupported:
             st.warning(

@@ -125,6 +125,19 @@ def iter_qrels(path: Path = DATA_DIR / QRELS_FILE) -> Iterator[QrelEntry]:
             yield QrelEntry(query_id=qid, doc_id=did, relevance=int(rel))
 
 
+def ensure_corpus(out_dir: Path = DATA_DIR) -> Path:
+    """Download the corpus if the normalized files are missing.
+
+    Lets a fresh environment (e.g. a Hugging Face Space on first boot)
+    self-bootstrap without a separate build step — if ``corpus.jsonl``
+    already exists it's a no-op.
+    """
+    if (out_dir / CORPUS_FILE).exists():
+        return out_dir
+    download_nfcorpus(out_dir)
+    return out_dir
+
+
 def load_documents(path: Path = DATA_DIR / CORPUS_FILE) -> list[Document]:
     return list(iter_documents(path))
 
@@ -217,6 +230,7 @@ __all__ = [
     "Query",
     "compute_stats",
     "download_nfcorpus",
+    "ensure_corpus",
     "iter_documents",
     "iter_qrels",
     "iter_queries",

@@ -20,3 +20,5 @@ data/
 indexes/
 eval_results/
 *.parquet
+# staged Hugging Face Space deploy tree (rebuilt by scripts/prepare_space.py)
+.hf_space/

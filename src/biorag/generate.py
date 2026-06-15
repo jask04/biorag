@@ -173,16 +173,21 @@ class GeminiAnswerGenerator:
         max_passage_chars: int = DEFAULT_MAX_PASSAGE_CHARS,
         max_retries: int = DEFAULT_MAX_RETRIES,
         backoff_base: float = DEFAULT_BACKOFF_BASE,
+        api_key: str | None = None,
     ) -> None:
         from google import genai
 
-        settings = get_settings()
-        if not settings.google_api_key:
+        # ``api_key`` lets the UI inject a visitor's own key (BYOK) without
+        # touching the process environment. Falls back to the configured
+        # key for the CLI and the eval harness.
+        resolved_key = api_key or get_settings().google_api_key
+        if not resolved_key:
             raise RuntimeError(
-                "GOOGLE_API_KEY must be set in .env to call Gemini"
+                "No Gemini API key available — set GOOGLE_API_KEY in .env or "
+                "pass api_key explicitly"
             )
         # Key is consumed only here, never stored on self or logged.
-        self._client = genai.Client(api_key=settings.google_api_key)
+        self._client = genai.Client(api_key=resolved_key)
         self._corpus = corpus
         self._model = model
         self._prompt = prompt

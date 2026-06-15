@@ -1,0 +1,14 @@
+# Runtime dependencies for the Hugging Face Space (the Streamlit app only).
+# The eval stack (ragas, langchain*) is intentionally excluded — it isn't
+# imported by app.py, which keeps the Space image smaller and the build
+# faster. For local development + the full eval harness, use `uv sync`
+# against pyproject.toml instead.
+streamlit>=1.58.0
+sentence-transformers>=5.5.1
+qdrant-client>=1.18.0
+rank-bm25>=0.2.2
+google-genai>=2.7.0
+datasets>=4.8.5
+pydantic-settings>=2.5
+numpy>=2.4.6
+pandas>=2.0
