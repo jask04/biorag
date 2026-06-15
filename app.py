@@ -42,8 +42,22 @@ from biorag.rewrite import GeminiHyDERewriter, HydeRetriever
 
 st.set_page_config(
     page_title="biorag — cited biomedical Q&A",
-    page_icon="🧬",
     layout="wide",
+)
+
+# Light, deliberate styling: hide the default Streamlit chrome, tighten the
+# top spacing, and give the sidebar a quiet wordmark. Kept minimal on
+# purpose — the content is the point.
+st.markdown(
+    """
+    <style>
+      #MainMenu, footer {visibility: hidden;}
+      .block-container {padding-top: 2.5rem; max-width: 1100px;}
+      section[data-testid="stSidebar"] {border-right: 1px solid rgba(255,255,255,0.08);}
+      h1, h2, h3 {letter-spacing: -0.01em;}
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 
@@ -164,7 +178,7 @@ def render_results_section(frame: pd.DataFrame, *, chart_metrics: bool) -> None:
 # ---------- sidebar: pipeline config ----------
 
 with st.sidebar:
-    st.title("🧬 biorag")
+    st.title("biorag")
     st.caption(
         "Cited Q&A over biomedical literature (BEIR NFCorpus). "
         "A research-literature assistant — **not** medical advice."
@@ -223,7 +237,7 @@ with st.sidebar:
 
 # ---------- main: tabs ----------
 
-ask_tab, benchmark_tab = st.tabs(["💬 Ask", "📊 Benchmark"])
+ask_tab, benchmark_tab = st.tabs(["Ask", "Benchmark"])
 
 with ask_tab:
     st.header("Ask the biomedical literature")
@@ -291,7 +305,7 @@ with ask_tab:
         with st.expander(f"Retrieved passages ({len(hits)})", expanded=False):
             for hit in hits:
                 cited = any(c.doc_id == hit.doc_id for c in answer.citations)
-                marker = "✓ cited" if cited else "not cited"
+                marker = "cited" if cited else "not cited"
                 st.markdown(
                     f"**[{hit.doc_id}]** {hit.title or '(untitled)'}  \n"
                     f"score `{hit.score:.3f}` · {marker}"

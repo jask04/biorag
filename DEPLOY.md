@@ -48,8 +48,15 @@ git push -f origin main      # authenticate with your HF write token
 ```
 
 The Space builds, installs `requirements.txt`, downloads NFCorpus on first
-boot (~30s), and serves the app. Re-deploy after changes by re-running
-`prepare_space.py` and pushing again.
+boot (~30s), and serves the app.
+
+**Redeploy after changes** — `prepare_space.py` preserves the `.git` it
+finds in `.hf_space`, so subsequent deploys are just:
+
+```bash
+uv run python scripts/prepare_space.py --out .hf_space
+cd .hf_space && git add . && git commit -m "Update" && git push
+```
 
 ## Notes
 

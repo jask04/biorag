@@ -27,9 +27,18 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def prepare(out: Path) -> None:
+    # Clear prior staged content but preserve a ``.git`` directory if the
+    # Space remote has already been set up here — so redeploys are just
+    # ``prepare_space`` + ``git add/commit/push`` with no re-init.
     if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+        for child in out.iterdir():
+            if child.name == ".git":
+                continue
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+    out.mkdir(parents=True, exist_ok=True)
 
     # The app never imports biorag.eval, and that subpackage pulls the
     # ragas/langchain deps deliberately excluded from the Space image —
