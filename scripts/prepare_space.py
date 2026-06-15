@@ -6,6 +6,7 @@ under ``src/``). This script stages a self-contained Space tree:
 
     <out>/
       README.md          (front-matter, from deploy/space_readme.md)
+      Dockerfile         (runs Streamlit; from deploy/Dockerfile)
       app.py
       requirements.txt
       biorag/            (copied from src/biorag)
@@ -40,6 +41,7 @@ def prepare(out: Path) -> None:
     )
     shutil.copy2(ROOT / "app.py", out / "app.py")
     shutil.copy2(ROOT / "requirements.txt", out / "requirements.txt")
+    shutil.copy2(ROOT / "deploy" / "Dockerfile", out / "Dockerfile")
     shutil.copy2(ROOT / "deploy" / "space_readme.md", out / "README.md")
 
     results_src = ROOT / "eval_results"

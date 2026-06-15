@@ -3,9 +3,8 @@ title: biorag
 emoji: 🧬
 colorFrom: green
 colorTo: blue
-sdk: streamlit
-sdk_version: 1.58.0
-app_file: app.py
+sdk: docker
+app_port: 8501
 pinned: false
 short_description: Cited biomedical Q&A with a benchmarked retrieval pipeline
 ---

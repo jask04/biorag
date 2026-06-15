@@ -11,7 +11,9 @@ its three secrets.
    **write** scope: Settings → Access Tokens → New token.
 2. Create a new Space: <https://huggingface.co/new-space>
    - Owner: your account · Space name: `biorag`
-   - SDK: **Streamlit** · Hardware: **CPU basic (free)** · Visibility: Public
+   - SDK: **Docker** → **Blank** template (HF no longer offers a one-click
+     Streamlit SDK; the bundled `Dockerfile` runs Streamlit)
+   - Hardware: **CPU basic (free)** · Visibility: Public
 
 ## 2. Set the Space secrets
 
@@ -30,9 +32,9 @@ build it once locally with `uv run python scripts/build_index.py`.
 
 The `biorag` package lives under `src/` for local development, but a Space
 expects it at the repo root. `scripts/prepare_space.py` stages a
-self-contained tree (package at the root, `requirements.txt`, the
-front-matter `README.md`, and the `eval_results/` JSONs for the Benchmark
-tab):
+self-contained tree (package at the root, `Dockerfile`, `requirements.txt`,
+the front-matter `README.md`, and the `eval_results/` JSONs for the
+Benchmark tab):
 
 ```bash
 uv run python scripts/prepare_space.py --out .hf_space

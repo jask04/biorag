@@ -178,11 +178,11 @@ uv run ruff check . && uv run mypy && uv run pytest
 
 ## Deploying
 
-The app runs on a free **Hugging Face Space** (Streamlit SDK). It
-self-bootstraps the corpus on first boot and reads its vectors from your
-Qdrant Cloud cluster. Set three Space secrets — `GOOGLE_API_KEY`,
-`QDRANT_URL`, `QDRANT_API_KEY` — and push. See [DEPLOY.md](DEPLOY.md) for
-the step-by-step.
+The app runs on a free **Hugging Face Space** (Docker SDK, running
+Streamlit). It self-bootstraps the corpus on first boot and reads its
+vectors from your Qdrant Cloud cluster. Set three Space secrets —
+`GOOGLE_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY` — and push. See
+[DEPLOY.md](DEPLOY.md) for the step-by-step.
 
 ## What's deliberately not here
 
