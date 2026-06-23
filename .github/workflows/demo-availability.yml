@@ -1,0 +1,36 @@
+name: Demo Availability
+
+on:
+  schedule:
+    - cron: "17 10 * * 1,4"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check Qdrant cluster
+        env:
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+        run: |
+          test -n "$QDRANT_URL"
+          test -n "$QDRANT_API_KEY"
+          curl --fail --silent --show-error \
+            --connect-timeout 15 \
+            --max-time 30 \
+            --header "api-key: ${QDRANT_API_KEY}" \
+            "${QDRANT_URL%/}/collections" \
+            > /dev/null
+          echo "Qdrant cluster is reachable."
+
+      - name: Check Hugging Face Space
+        run: |
+          curl --fail --silent --show-error \
+            --connect-timeout 15 \
+            --max-time 30 \
+            https://jask04-biorag.hf.space \
+            > /dev/null
+          echo "Hugging Face Space is reachable."
