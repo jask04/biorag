@@ -9,7 +9,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Check Qdrant cluster
@@ -29,9 +29,21 @@ jobs:
 
       - name: Check Hugging Face Space
         run: |
-          curl --fail --silent --show-error \
-            --connect-timeout 15 \
-            --max-time 30 \
-            https://jask04-biorag.hf.space \
-            > /dev/null
-          echo "Hugging Face Space is reachable."
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error \
+              --connect-timeout 15 \
+              --max-time 30 \
+              https://jask04-biorag.hf.space \
+              > /dev/null; then
+              echo "Hugging Face Space is reachable."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 12 ]; then
+              echo "Hugging Face Space not ready yet; retrying (${attempt}/12)."
+              sleep 30
+            fi
+          done
+
+          echo "Hugging Face Space did not become reachable after retries."
+          exit 1
