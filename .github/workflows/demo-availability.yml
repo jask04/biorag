@@ -19,15 +19,28 @@ jobs:
         run: |
           test -n "$QDRANT_URL"
           test -n "$QDRANT_API_KEY"
-          curl --fail --silent --show-error \
-            --connect-timeout 15 \
-            --max-time 30 \
-            --header "api-key: ${QDRANT_API_KEY}" \
-            "${QDRANT_URL%/}/collections" \
-            > /dev/null
-          echo "Qdrant cluster is reachable."
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error \
+              --connect-timeout 15 \
+              --max-time 30 \
+              --header "api-key: ${QDRANT_API_KEY}" \
+              "${QDRANT_URL%/}/collections" \
+              > /dev/null; then
+              echo "Qdrant cluster is reachable."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 12 ]; then
+              echo "Qdrant cluster not ready yet; retrying (${attempt}/12)."
+              sleep 30
+            fi
+          done
+
+          echo "Qdrant cluster did not become reachable after retries."
+          exit 1
 
       - name: Check Hugging Face Space
+        if: ${{ always() }}
         run: |
           for attempt in {1..12}; do
             if curl --fail --silent --show-error \
