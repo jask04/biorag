@@ -6,12 +6,17 @@ on:
     - cron: "17 10 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Check Qdrant cluster
         env:
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
@@ -20,13 +25,7 @@ jobs:
           test -n "$QDRANT_URL"
           test -n "$QDRANT_API_KEY"
           for attempt in {1..12}; do
-            if curl --fail --silent --show-error \
-              --connect-timeout 15 \
-              --max-time 30 \
-              --header "api-key: ${QDRANT_API_KEY}" \
-              "${QDRANT_URL%/}/collections" \
-              > /dev/null; then
-              echo "Qdrant cluster is reachable."
+            if python3 src/biorag/availability.py; then
               exit 0
             fi
 
