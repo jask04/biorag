@@ -189,6 +189,9 @@ vectors from your Qdrant Cloud cluster. Set three Space secrets —
 `GOOGLE_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY` — and push. See
 [DEPLOY.md](DEPLOY.md) for the step-by-step.
 
+For suspended-cluster recovery and the daily demo checks, see
+[docs/demo-ops.md](docs/demo-ops.md).
+
 ## What's deliberately not here
 
 - **No fine-tuning** — off-the-shelf embedders/rerankers only.

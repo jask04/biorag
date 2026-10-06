@@ -14,7 +14,7 @@ ENV HOME=/home/user \
 
 WORKDIR $HOME/app
 
-COPY --chown=user requirements.txt .
+COPY --chown=user requirements.txt constraints.txt ./
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=user . .

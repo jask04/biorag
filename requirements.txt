@@ -3,6 +3,7 @@
 # imported by app.py, which keeps the Space image smaller and the build
 # faster. For local development + the full eval harness, use `uv sync`
 # against pyproject.toml instead.
+-c constraints.txt
 streamlit>=1.58.0
 sentence-transformers>=5.5.1
 qdrant-client>=1.18.0
